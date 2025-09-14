@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-# Логика запуска PaddleOCR (CLI) + сбор текста
-
 import subprocess, sys, re, ast, os
 from pathlib import Path
 from typing import List, Tuple
-# в начале файла, рядом с import'ами
 try:
     from gemini_post import clean_and_extract, post_check
     _HAS_GEMINI = True
@@ -16,9 +12,7 @@ def run_ocr(in_file, out_dir_str, lang,
             use_doc_unwarping, use_doc_orientation, use_textline_orientation,
             use_server_rec, server_rec_dir_str,
             use_gpu, gpu_id) -> Tuple[str, str, List[str]]:
-    """
-    Возвращает (log_text, merged_text, files_out)
-    """
+
     if not in_file:
         return "Файл не выбран.", "", []
 
@@ -29,9 +23,7 @@ def run_ocr(in_file, out_dir_str, lang,
     server_rec_dir = Path(server_rec_dir_str) if server_rec_dir_str else Path("")
 
     cmd = [sys.executable, "-m", "paddleocr", "ocr",
-           "-i", str(in_path),
-           "--lang", str(lang),
-           "--save_path", str(out_dir)]
+           "-i", str(in_path), "--lang", str(lang), "--save_path", str(out_dir)]
 
     if use_doc_unwarping:
         cmd += ["--use_doc_unwarping", "true"]
@@ -63,10 +55,8 @@ def run_ocr(in_file, out_dir_str, lang,
     if rc != 0:
         log_text += f"\n[ERROR] CLI вернул код {rc}. Лог: {log_file}\n"
 
-    # Ищем TXT
-    candidates = sorted(out_dir.glob(f"{in_path.stem}_page*.txt"))
-    if not candidates:
-        candidates = sorted(out_dir.glob(f"{in_path.stem}.txt"))
+    candidates = sorted(out_dir.glob(f"{in_path.stem}_page*.txt")) or \
+                 sorted(out_dir.glob(f"{in_path.stem}.txt"))
 
     merged_path = out_dir / f"{in_path.stem}_ALL.txt"
     merged_text = ""
@@ -81,7 +71,6 @@ def run_ocr(in_file, out_dir_str, lang,
         merged_text = merged_path.read_text(encoding="utf-8")
         files_out.append(str(merged_path))
     else:
-        # План Б: достать rec_texts из лога
         log = log_file.read_text(encoding="utf-8", errors="ignore")
         texts = []
         for m in re.finditer(r"['\"]rec_texts['\"]:\s*(\[[^\]]*\])", log, flags=re.S):
@@ -97,6 +86,30 @@ def run_ocr(in_file, out_dir_str, lang,
             files_out.append(str(merged_path))
         else:
             log_text += "\n[WARN] Не нашёл *.txt и не смог извлечь rec_texts из лога."
-            
+
+    use_gemini_env   = os.getenv("USE_GEMINI", "0") == "1"
+    do_postcheck_env = os.getenv("GEMINI_POSTCHECK", "0") == "1"
+    gemini_model     = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+
+    if _HAS_GEMINI and use_gemini_env and merged_text and merged_text != "(пусто)":
+        try:
+            clean_md, data_json = clean_and_extract(merged_text, model_name=gemini_model)
+
+            clean_path = out_dir / f"{in_path.stem}_clean.md"
+            data_path  = out_dir / f"{in_path.stem}_extracted.json"
+            clean_path.write_text(clean_md or "", encoding="utf-8")
+            data_path.write_text(data_json or "{}", encoding="utf-8")
+            files_out += [str(clean_path), str(data_path)]
+
+            log_text += "\n[Gemini] CLEAN_MARKDOWN и EXTRACTED_JSON готовы."
+
+            if do_postcheck_env:
+                report_json = post_check(clean_md, data_json, model_name=gemini_model)
+                report_path = out_dir / f"{in_path.stem}_postcheck.json"
+                report_path.write_text(report_json or "{}", encoding="utf-8")
+                files_out.append(str(report_path))
+                log_text += "\n[Gemini] Post-check отчёт готов."
+        except Exception as e:
+            log_text += f"\n[Gemini ERROR] {e}"
 
     return log_text, (merged_text if merged_text else "(пусто)"), files_out

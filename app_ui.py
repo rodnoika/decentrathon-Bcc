@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-# Минимальный интерфейс Gradio — вызывает run_ocr из ocr.py (портируемые дефолты путей)
-
 import os, tempfile, shutil
 from pathlib import Path
 import gradio as gr
-from ocr import run_ocr  # рядом должен быть ocr.py с функцией run_ocr
-
+from ocr import run_ocr
 def _default_out_dir() -> str:
     try:
         p = (Path.cwd() / "ocr_out").resolve()
@@ -15,7 +11,6 @@ def _default_out_dir() -> str:
         return tempfile.gettempdir()
 
 def _guess_rec_dir() -> str:
-    # приоритет: переменная окружения -> server_rec -> mobile_rec
     env = os.getenv("PADDLE_REC_MODEL_DIR", "").strip()
     cands = []
     if env:
@@ -28,7 +23,7 @@ def _guess_rec_dir() -> str:
     for c in cands:
         if c and c.exists():
             return str(c.resolve())
-    return ""  # не нашли — UI покажет пусто, скрипт просто не добавит --rec_model_dir
+    return "" 
 
 DEFAULT_OUT = _default_out_dir()
 DEFAULT_REC = _guess_rec_dir()
@@ -37,11 +32,9 @@ def run_and_stage(in_file, out_dir, lang,
                   use_doc_unwarping, use_doc_orientation, use_textline_orientation,
                   use_server_rec, server_rec_dir,
                   use_gpu, gpu_id):
-    # Если пользователь оставил пустым — используем temp
     out_dir = (out_dir or "").strip()
     if not out_dir:
         out_dir = str(Path(tempfile.mkdtemp(prefix="ocr_out_")))
-    # Если путь к модели пустой — передадим пустую строку (run_ocr это нормально обработает)
     server_rec_dir = (server_rec_dir or "").strip()
 
     log, text, files = run_ocr(
@@ -51,7 +44,6 @@ def run_and_stage(in_file, out_dir, lang,
         use_gpu, gpu_id
     )
 
-    # Копируем отдаваемые файлы в Temp — Gradio может их безопасно скачивать
     stage_dir = Path(tempfile.mkdtemp(prefix="gradio_stage_"))
     staged = []
     for fp in files or []:
