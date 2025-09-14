@@ -26,7 +26,7 @@ def _guess_rec_dir() -> str:
     return "" 
 
 DEFAULT_OUT = _default_out_dir()
-DEFAULT_REC = _guess_rec_dir()
+DEFAULT_REC = "/home/user/app/eslav_PP-OCRv5_mobile_rec"
 
 def run_and_stage(in_file, out_dir, lang,
                   use_doc_unwarping, use_doc_orientation, use_textline_orientation,
