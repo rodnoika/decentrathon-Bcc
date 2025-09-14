@@ -1,0 +1,10 @@
+paddleocr>=3.0.0
+paddlex>=3.0.0
+gradio>=4.28.0
+google-generativeai>=0.7.0
+python-dotenv>=1.0.1
+numpy>=1.24.0
+Pillow>=10.0.0
+opencv-python>=4.8.0
+shapely>=2.0.0
+paddlepaddle==2.6.1
