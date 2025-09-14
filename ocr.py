@@ -10,7 +10,6 @@ except ImportError:
 
 
 def _save_docx_from_text(text: str, dest: Path) -> None:
-    """Сохранить текст в DOCX (каждые два \n — новый абзац)."""
     doc = Document()
     for para in (text or "").split("\n\n"):
         p = doc.add_paragraph()
@@ -101,14 +100,12 @@ def run_ocr(in_file, out_dir_str, lang,
         else:
             log_text += "\n[WARN] Не нашёл *.txt и не смог извлечь rec_texts из лога."
 
-    # --- DOCX ДОПОЛНИТЕЛЬНО к .txt ---
     if merged_text:
         docx_path = out_dir / f"{in_path.stem}_ALL.docx"
         _save_docx_from_text(merged_text, docx_path)
         files_out.append(str(docx_path))
         log_text += f"\n[DOCX] Добавлен: {docx_path}"
 
-    # --- Gemini пост-обработка (опционально, через env) ---
     use_gemini_env   = os.getenv("USE_GEMINI", "0") == "1"
     do_postcheck_env = os.getenv("GEMINI_POSTCHECK", "0") == "1"
     gemini_model     = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
@@ -123,7 +120,6 @@ def run_ocr(in_file, out_dir_str, lang,
             data_path.write_text(data_json or "{}", encoding="utf-8")
             files_out += [str(clean_path), str(data_path)]
 
-            # DOCX из CLEAN_MARKDOWN (дополнительно к .md)
             if clean_md:
                 docx_clean = out_dir / f"{in_path.stem}_clean.docx"
                 _save_docx_from_text(clean_md, docx_clean)
