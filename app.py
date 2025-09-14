@@ -75,7 +75,7 @@ with gr.Blocks(title="PaddleOCR (CLI) • Минимальный UI") as demo:
 
     with gr.Row():
         use_server_rec = gr.Checkbox(value=True, label="use_server_rec (если модель есть)")
-        server_rec_dir = gr.Textbox(label="Путь к server rec модели (можно пусто)", value=DEFAULT_REC)
+        server_rec_dir = gr.Textbox(label="Путь к server rec модели", value=DEFAULT_REC)
 
     with gr.Row():
         use_gpu = gr.Checkbox(value=False, label="GPU")
