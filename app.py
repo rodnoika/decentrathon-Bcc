@@ -58,8 +58,8 @@ def run_and_stage(in_file, out_dir, lang,
             staged.append(str(dst))
     return log, text, staged
 
-with gr.Blocks(title="PaddleOCR (CLI) • Минимальный UI") as demo:
-    gr.Markdown("### PaddleOCR (CLI) — минимальный интерфейс(В hugging face дают мало мощности CPU, поэтому это может занимать большое время)")
+with gr.Blocks(title="Koz_system (CLI)") as demo:
+    gr.Markdown("### Koz_system (CLI)(В hugging face дают мало мощности CPU, поэтому это может занимать большое время)")
 
     with gr.Row():
         in_file = gr.File(label="Файл (PDF/изображение)", file_count="single", type="filepath")
